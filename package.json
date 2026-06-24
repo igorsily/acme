@@ -1,0 +1,59 @@
+{
+  "name": "acme",
+  "private": true,
+  "workspaces": {
+    "packages": [
+      "apps/*",
+      "packages/*"
+    ],
+    "catalog": {
+      "dotenv": "^17.2.2",
+      "zod": "^4.1.13",
+      "typescript": "^6",
+      "@trpc/server": "^11.16.0",
+      "better-auth": "1.6.11",
+      "lucide-react": "^0.546.0",
+      "next-themes": "^0.4.6",
+      "react": "^19.2.6",
+      "react-dom": "^19.2.6",
+      "sonner": "^2.0.5",
+      "@trpc/client": "^11.16.0",
+      "@types/react": "^19.2.15",
+      "@types/react-dom": "^19.2.3",
+      "tailwindcss": "^4.1.18"
+    }
+  },
+  "type": "module",
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "check-types": "turbo check-types",
+    "dev:web": "turbo -F web dev",
+    "dev:server": "turbo -F server dev",
+    "db:push": "turbo -F @acme/db db:push",
+    "db:studio": "turbo -F @acme/db db:studio",
+    "db:generate": "turbo -F @acme/db db:generate",
+    "db:migrate": "turbo -F @acme/db db:migrate",
+    "db:start": "turbo -F @acme/db db:start",
+    "db:watch": "turbo -F @acme/db db:watch",
+    "db:stop": "turbo -F @acme/db db:stop",
+    "db:down": "turbo -F @acme/db db:down",
+    "db:custom": "turbo -F @acme/db db:custom",
+    "check": "ultracite check",
+    "fix": "ultracite fix"
+  },
+  "dependencies": {
+    "@acme/env": "workspace:*",
+    "dotenv": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@acme/config": "workspace:*",
+    "@biomejs/biome": "2.4.15",
+    "@types/node": "^22.13.14",
+    "turbo": "^2.8.12",
+    "typescript": "catalog:",
+    "ultracite": "7.8.1"
+  },
+  "packageManager": "bun@1.3.9"
+}

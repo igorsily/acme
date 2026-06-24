@@ -1,0 +1,21 @@
+import { env } from "@acme/env/server";
+import fastifyCors from "@fastify/cors";
+import fp from "fastify-plugin";
+
+const baseCorsConfig = {
+	origin: env.CORS_ORIGIN,
+	methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+	allowedHeaders: [
+		"Content-Type",
+		"Authorization",
+		"X-Requested-With",
+		"sentry-trace",
+		"baggage",
+	],
+	credentials: true,
+	maxAge: 86_400,
+};
+
+export default fp(async (fastify) => {
+	await fastify.register(fastifyCors, baseCorsConfig);
+});

@@ -1,0 +1,73 @@
+---
+description: Padrões de UI — formulários, tabelas e listagens
+globs: apps/web/**/*
+alwaysApply: false
+---
+
+# UI — Formulários & Tabelas
+
+## Formulários → `createFormFactory`
+
+Todo formulário com validação DEVE usar `createFormFactory` (TanStack Form + Zod).
+
+```typescript
+// ❌ BAD — form raw, react-hook-form, validação duplicada
+// ✅ GOOD
+import { createFormFactory } from "@/components/form-factory";
+import { createUserSchema } from "@acme/types";
+
+const userFormFactory = createFormFactory({
+  schema: createUserSchema,
+  defaultValues: { name: "", email: "" },
+});
+
+function UserForm() {
+  const form = userFormFactory.useForm({
+    onSubmit: async (values) => { /* values já validados */ },
+  });
+  return (
+    <form.Form>
+      <form.Field name="name" label="Nome" />
+      <form.Submit>Salvar</form.Submit>
+    </form.Form>
+  );
+}
+```
+
+- Factory declarada **fora** do componente (module-level)
+- Schema sempre de `packages/types`
+- Validação só no submit — não replique no `onSubmit`
+
+## Listagens → `DataTable`
+
+Qualquer tabela DEVE usar `DataTable` + `useDataTable`. Paginação/sort/busca são server-side.
+
+```typescript
+// Colunas em module-level
+const columns: ColumnDef<User>[] = [
+  {
+    accessorKey: "name",
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Nome" />,
+    meta: { filterType: "text" },
+  },
+];
+
+function PageContent() {
+  const query = useUsersQuery();
+  const { table, isLoading, pageIndex, pageSize } = useDataTable({ columns, query, pageCount: query.pageCount });
+  return (
+    <>
+      <DataTable.Toolbar table={table} searchPlaceholder="Buscar..." />
+      <DataTable.Content table={table} isLoading={isLoading} />
+      <DataTable.Pagination table={table} pageIndex={pageIndex} pageSize={pageSize} />
+    </>
+  );
+}
+```
+
+- Colunas **fora** do componente
+- Filtros por coluna: `meta.filterType` + whitelist `filterableColumns` no service
+- Colunas `select`: inclua `filterOptions`; coluna `actions` sem filtro
+- Hook de query repassa `page`, `limit`, `sort`, `search`, `filters` ao tRPC
+
+Detalhes: `apps/web/src/components/form-factory/AGENTS.md` e `data-table/AGENTS.md`.

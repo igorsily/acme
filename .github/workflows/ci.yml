@@ -1,0 +1,269 @@
+name: CI/CD
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      build_api:
+        description: Build and publish API image
+        type: boolean
+        default: true
+      build_web:
+        description: Build and publish Web image
+        type: boolean
+        default: true
+      deploy_api:
+        description: Deploy API (uses image_tag or sha of this commit)
+        type: boolean
+        default: false
+      deploy_web:
+        description: Deploy Web (uses image_tag or sha of this commit)
+        type: boolean
+        default: false
+      image_tag:
+        description: "Docker tag (empty = sha-<commit>; use latest to redeploy without rebuild)"
+        type: string
+        default: ""
+      recreate_only:
+        description: Restart containers with current .env images (no pull, no tag update)
+        type: boolean
+        default: false
+
+concurrency:
+  group: ci-cd-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+env:
+  CI: true
+  TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+  TURBO_TEAM: ${{ vars.TURBO_TEAM }}
+  DATABASE_URL: postgresql://postgres:password@localhost:5432/acme
+  BETTER_AUTH_SECRET: ci-secret-ci-secret-ci-secret-ci-secret
+  BETTER_AUTH_URL: http://api.localhost
+  CORS_ORIGIN: http://web.localhost
+  NEXT_PUBLIC_SERVER_URL: http://api.localhost
+  IMAGE_NAMESPACE: ${{ vars.DOCKERHUB_NAMESPACE || secrets.DOCKERHUB_USERNAME }}
+
+jobs:
+  validate:
+    name: Validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.9
+
+      - name: Cache Bun install cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-bun-
+
+      - name: Cache Turborepo
+        uses: actions/cache@v4
+        with:
+          path: .turbo
+          key: ${{ runner.os }}-turbo-${{ hashFiles('turbo.json', 'bun.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-turbo-
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Lint and format
+        run: bun run check
+
+      - name: Check types
+        run: bunx turbo run check-types --affected
+
+  build-api:
+    name: Build API image
+    runs-on: ubuntu-latest
+    needs: validate
+    if: >
+      needs.validate.result == 'success' &&
+      (
+        (github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v'))) ||
+        (github.event_name == 'workflow_dispatch' && (github.event.inputs.build_api == 'true' || github.event.inputs.deploy_api == 'true'))
+      )
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE_NAMESPACE }}/acme-api
+          tags: |
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=sha,prefix=sha-,format=long
+            type=semver,pattern={{version}}
+            type=ref,event=tag
+
+      - name: Build and push API image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: deploy/dockerfiles/server.Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=acme-api
+          cache-to: type=gha,scope=acme-api,mode=max
+
+  build-web:
+    name: Build Web image
+    runs-on: ubuntu-latest
+    needs: validate
+    if: >
+      needs.validate.result == 'success' &&
+      (
+        (github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v'))) ||
+        (github.event_name == 'workflow_dispatch' && (github.event.inputs.build_web == 'true' || github.event.inputs.deploy_web == 'true'))
+      )
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE_NAMESPACE }}/acme-web
+          tags: |
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=sha,prefix=sha-,format=long
+            type=semver,pattern={{version}}
+            type=ref,event=tag
+
+      - name: Build and push Web image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: deploy/dockerfiles/web.Dockerfile
+          push: true
+          build-args: |
+            NEXT_PUBLIC_SERVER_URL=${{ vars.NEXT_PUBLIC_SERVER_URL || 'http://api.localhost' }}
+            NEXT_PUBLIC_SENTRY_DSN=${{ secrets.NEXT_PUBLIC_SENTRY_DSN }}
+            SENTRY_AUTH_TOKEN=${{ secrets.SENTRY_AUTH_TOKEN }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=acme-web
+          cache-to: type=gha,scope=acme-web,mode=max
+
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    needs:
+      - validate
+      - build-api
+      - build-web
+    if: >
+      always() &&
+      needs.validate.result == 'success' &&
+      (
+        (github.event_name == 'push' &&
+          (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')) &&
+          needs.build-api.result == 'success' &&
+          needs.build-web.result == 'success') ||
+        (github.event_name == 'workflow_dispatch' &&
+          (github.event.inputs.deploy_api == 'true' || github.event.inputs.deploy_web == 'true'))
+      )
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate Docker Compose files
+        run: |
+          docker compose --env-file deploy/.env.example -f deploy/compose.infra.yml config >/dev/null
+          docker compose --env-file deploy/.env.example -f deploy/compose.apps.yml config >/dev/null
+
+      - name: Setup SSH
+        env:
+          SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+
+      - name: Resolve image tag
+        id: image
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            if [[ -n "${{ github.event.inputs.image_tag }}" ]]; then
+              echo "tag=${{ github.event.inputs.image_tag }}" >> "$GITHUB_OUTPUT"
+            elif [[ "${{ needs.build-api.result }}" == "success" || "${{ needs.build-web.result }}" == "success" ]]; then
+              echo "tag=sha-${{ github.sha }}" >> "$GITHUB_OUTPUT"
+            else
+              echo "tag=latest" >> "$GITHUB_OUTPUT"
+              echo "::notice::Deploy sem build: usando tag latest. Para outra tag, preencha image_tag."
+            fi
+          else
+            echo "tag=sha-${{ github.sha }}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Deploy via SSH
+        env:
+          DEPLOY_HOST: ${{ vars.DEPLOY_SSH_HOST || '66.94.105.114' }}
+          DEPLOY_USER: ${{ vars.DEPLOY_SSH_USER || 'igorsily' }}
+          DEPLOY_PATH: ${{ vars.DEPLOY_PATH || '/home/igorsily/acme' }}
+          IMAGE_TAG: ${{ steps.image.outputs.tag }}
+          RECREATE_ONLY: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.recreate_only == 'true' }}
+          DEPLOY_API: ${{ (github.event_name == 'workflow_dispatch' && github.event.inputs.deploy_api == 'true') || (github.event_name == 'push' && needs.build-api.result == 'success') }}
+          DEPLOY_WEB: ${{ (github.event_name == 'workflow_dispatch' && github.event.inputs.deploy_web == 'true') || (github.event_name == 'push' && needs.build-web.result == 'success') }}
+        run: |
+          ssh -i ~/.ssh/deploy_key \
+            -o StrictHostKeyChecking=no \
+            "${DEPLOY_USER}@${DEPLOY_HOST}" \
+            DEPLOY_DIR="$DEPLOY_PATH" \
+            IMAGE_NAMESPACE="${{ env.IMAGE_NAMESPACE }}" \
+            IMAGE_TAG="$IMAGE_TAG" \
+            RECREATE_ONLY="$RECREATE_ONLY" \
+            DEPLOY_API="$DEPLOY_API" \
+            DEPLOY_WEB="$DEPLOY_WEB" \
+            bash -s < deploy/scripts/deploy-remote.sh

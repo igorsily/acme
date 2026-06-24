@@ -1,0 +1,26 @@
+{
+  "name": "@acme/types",
+  "version": "0.0.0",
+  "type": "module",
+  "exports": {
+    ".": {
+      "default": "./src/index.ts"
+    },
+    "./schemas/*": {
+      "default": "./src/schemas/*.ts"
+    },
+    "./utils/*": {
+      "default": "./src/utils/*.ts"
+    }
+  },
+  "scripts": {
+    "check-types": "tsc -b"
+  },
+  "dependencies": {
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@acme/config": "workspace:*",
+    "typescript": "catalog:"
+  }
+}

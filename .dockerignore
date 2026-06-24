@@ -1,0 +1,21 @@
+# Shared Docker ignore rules for API + WEB images.
+# Keep monorepo source paths available for `web.Dockerfile` (`COPY . .`).
+
+# Build/runtime noise for both images.
+node_modules
+.next
+.turbo
+dist
+build
+coverage/
+.git
+.omo/
+.agents/
+.cursor/
+.zed/
+.playwright-mcp/
+.github/
+.env
+.env*.local
+*.log
+*.tsbuildinfo

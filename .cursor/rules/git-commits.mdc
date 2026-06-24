@@ -1,0 +1,86 @@
+---
+description: Fluxo de trabalho, commits, worktrees e PRs do projeto
+alwaysApply: true
+---
+
+# Workflow, commits e PRs
+
+## Antes de começar
+
+- Entenda a tarefa antes de editar código; leia os arquivos próximos ao ponto de mudança.
+- Trabalhe sempre em um `git worktree` próprio para a feature.
+- Nomeie o worktree e a branch com o nome curto da feature em `kebab-case`.
+- Use nomes específicos: `feature/admin-users`, `fix/auth-session`, `chore/ci-cache`.
+- Não trabalhe direto em `main`, `master` ou `dev`.
+
+Exemplo:
+
+```bash
+git fetch origin
+git worktree add ../acme-admin-users -b feature/admin-users origin/dev
+```
+
+## Durante a implementação
+
+- Faça diff mínimo e focado na tarefa.
+- Preserve padrões existentes antes de introduzir novos padrões.
+- Não misture refactor, feature e correção no mesmo conjunto de mudanças sem necessidade real.
+- Não reverta nem sobrescreva mudanças que você não criou.
+- Para mudanças Next.js, valide a tela em navegador real quando houver impacto visual ou de comportamento.
+- Para APIs, valide pelo endpoint ou por um fluxo que exerça a API de ponta a ponta.
+
+## Qualidade antes de commitar
+
+- Rode `bun run fix` antes de finalizar mudanças de código.
+- Rode `bun run check` para validar Ultracite/Biome.
+- Rode `bun run check-types` quando alterar TypeScript, contratos, tRPC, DB, auth ou componentes compartilhados.
+- Se alterar schema do banco, rode o comando Drizzle apropriado (`bun run db:generate`, `bun run db:push` ou `bun run db:migrate`) conforme o caso.
+- Não deixe `console.log`, `debugger`, `alert`, `.only` ou `.skip` em código versionado.
+
+## Commits
+
+- Crie commits pequenos, atômicos e reversíveis.
+- Separe commits por módulo ou responsabilidade.
+- Mantenha teste e implementação no mesmo commit quando o teste cobre aquela mudança.
+- Use mensagem no imperativo, específica e curta.
+- Não inclua menções a IA, agente, Claude, Cursor ou ferramentas na mensagem do commit.
+
+Bons exemplos:
+
+```text
+Add admin user filters
+Fix auth session refresh
+Refactor billing query types
+```
+
+Evite:
+
+```text
+updates
+fix stuff
+Cursor changes
+```
+
+## Pull requests
+
+- Abra PR sempre contra a branch `dev`.
+- Abra PR em modo normal, `Ready for Review`; não use draft.
+- Antes de abrir PR, confirme que a branch está atualizada com `origin/dev`.
+- Inclua no PR:
+  - O que mudou.
+  - Por que mudou.
+  - Como foi validado.
+- Não abra PR com checks locais quebrados sem explicar claramente o motivo.
+
+Comando recomendado:
+
+```bash
+gh pr create --base dev --head <branch-name> --title "<title>" --body "<body>" --ready
+```
+
+## Segurança do Git
+
+- Verifique `git status` antes de stage, commit, rebase ou PR.
+- Faça stage apenas dos arquivos da tarefa atual.
+- Use `git push --force-with-lease` em vez de `git push --force` quando um rebase exigir force push.
+- Nunca rode comandos destrutivos (`reset --hard`, `checkout --`, `clean -fd`) sem confirmação explícita.

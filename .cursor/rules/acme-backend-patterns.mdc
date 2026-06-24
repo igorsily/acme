@@ -1,0 +1,54 @@
+---
+description: Padrões de API tRPC, services e banco
+globs: packages/{api,db}/**/*
+alwaysApply: false
+---
+
+# Backend — tRPC & Services
+
+## Router tRPC (`packages/api`)
+
+```typescript
+import { listParamsSchema, listResponseSchema, itemListSchema } from "@acme/types";
+import { listItems } from "../services/item-service";
+import { protectedProcedure, router } from "../index";
+
+export const itemRouter = router({
+  list: protectedProcedure
+    .input(listParamsSchema)
+    .output(listResponseSchema(itemListSchema))
+    .query(async ({ input }) => listItems(input)),
+});
+```
+
+- Input/output sempre com schemas Zod de `@acme/types`
+- Procedures: `publicProcedure` | `protectedProcedure` (template não expõe `adminProcedure`)
+- Router delega para service — sem queries Drizzle no router
+
+## Service (`packages/api/src/services`)
+
+```typescript
+const filterableColumns = {
+  name: item.name,
+  status: item.status,
+} satisfies Record<string, unknown>;
+
+export async function listItems(params: ListParams) {
+  const filterConditions = applyColumnFilters(params.filters, filterableColumns);
+  // ...
+}
+```
+
+- Whitelist explícita em `filterableColumns`
+- Use `applyColumnFilters` para filtros de DataTable
+- Queries paralelas com `Promise.all` quando independentes
+
+## Schema & migrations (`packages/db`)
+
+- Colunas base em `schema/base-columns.ts`
+- Após alterar schema: `bun run db:generate` → revisar migration → `bun run db:migrate`
+- Nunca edite migrations já aplicadas em produção
+
+## Tipos compartilhados
+
+Defina schemas em `packages/types/src/schemas/` e exporte tipos com `z.infer`.

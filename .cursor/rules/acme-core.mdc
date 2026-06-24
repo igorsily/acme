@@ -1,0 +1,63 @@
+---
+description: Arquitetura e convenções do monorepo Acme
+alwaysApply: true
+---
+
+# Acme — Monorepo Template
+
+## Stack
+
+- **Runtime/pacotes:** Bun + Turborepo
+- **Web:** Next.js App Router (`apps/web`), React 19, Tailwind v4, shadcn (`@acme/ui`)
+- **API:** Fastify (`apps/server`) + tRPC v11 + SuperJSON
+- **Dados:** Drizzle ORM (`packages/db`), Better Auth (`packages/auth`) — plugins `username` + `admin`
+- **Validação:** Zod v4 em `packages/types`
+- **Qualidade:** Ultracite/Biome — rode `bun run fix` antes de commitar
+
+## Branches do template
+
+| Branch | Conteúdo |
+|--------|----------|
+| `main` | Mapa MapLibre + CRUD `item` + usuários/convites |
+| `without-map` | Mesma stack sem mapa nem deps MapLibre |
+
+## Estrutura de pacotes
+
+| Pacote | Responsabilidade |
+|--------|------------------|
+| `apps/web` | UI, páginas, hooks de query |
+| `apps/server` | HTTP, plugins, rotas auth/health |
+| `packages/api` | Routers tRPC (`publicProcedure`, `protectedProcedure`) + services em `src/services/` |
+| `packages/types` | Schemas Zod compartilhados (fonte única de tipos) |
+| `packages/db` | Schema e migrations |
+| `packages/auth` | Better Auth server |
+| `packages/env` | Variáveis tipadas (`web`, `server`) |
+
+## Fluxo de dados
+
+```
+UI (tRPC client) → packages/api (router) → packages/api/src/services → packages/db
+                      ↑ schemas Zod em packages/types
+```
+
+- Schemas Zod vivem em `packages/types` — nunca duplique validação inline.
+- Services não importam React; routers tRPC não acessam Drizzle diretamente.
+- Template usa **`protectedProcedure`** para rotas autenticadas (sem RBAC na UI).
+
+## Comandos úteis
+
+```bash
+bun run dev          # web + server
+bun run dev:web      # só frontend
+bun run dev:server   # só backend
+bun run check        # lint
+bun run fix          # format + lint fix
+bun run db:push      # sync schema
+```
+
+## Referências locais
+
+- **CRUD end-to-end:** `docs/crud-playbook.md` — referência: `item`
+- **Formulários:** `apps/web/src/components/form-factory/AGENTS.md`
+- **Tabelas:** `apps/web/src/components/data-table/AGENTS.md`
+- **Índice de docs:** `docs/AGENTS.md`

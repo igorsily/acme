@@ -1,0 +1,122 @@
+name: acme-apps
+
+services:
+  traefik:
+    image: traefik:v3.6
+    restart: unless-stopped
+    environment:
+      DOCKER_API_VERSION: ${DOCKER_API_VERSION:-1.40}
+    command:
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --entrypoints.web.address=:80
+      - --entrypoints.websecure.address=:443
+      - --certificatesresolvers.letsencrypt.acme.email=${TRAEFIK_ACME_EMAIL:-ops@example.com}
+      - --certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json
+      - --certificatesresolvers.letsencrypt.acme.httpchallenge=true
+      - --certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web
+      - --api.dashboard=${TRAEFIK_DASHBOARD:-false}
+    ports:
+      - "${TRAEFIK_HTTP_PORT:-80}:80"
+      - "${TRAEFIK_HTTPS_PORT:-443}:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - traefik_letsencrypt:/letsencrypt
+    networks:
+      - public
+      - private
+
+  migrate:
+    image: ${API_IMAGE:-igorsily/acme-api:latest}
+    restart: "no"
+    environment:
+      NODE_ENV: production
+      MIGRATIONS_FOLDER: /app/migrations
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-password}@postgis:5432/${POSTGRES_DB:-acme}
+    command: ["node", "dist/migrate.mjs"]
+    networks:
+      - private
+
+  api:
+    image: ${API_IMAGE:-igorsily/acme-api:latest}
+    restart: unless-stopped
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      MIGRATIONS_FOLDER: /app/migrations
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-password}@postgis:5432/${POSTGRES_DB:-acme}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:-change-me-change-me-change-me-change-me}
+      BETTER_AUTH_URL: ${BETTER_AUTH_URL:-http://api.localhost}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://web.localhost}
+      AUTH_COOKIE_DOMAIN: ${AUTH_COOKIE_DOMAIN:-}
+      SENTRY_DSN_API: ${SENTRY_DSN_API}
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "node -e \"fetch('http://127.0.0.1:3000/api/health').then((response)=>{if(!response.ok)process.exit(1)}).catch(()=>process.exit(1))\"",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=acme-public
+      - traefik.http.routers.api-http.rule=Host(`${API_DOMAIN:-api.localhost}`)
+      - traefik.http.routers.api-http.entrypoints=web
+      - traefik.http.routers.api-https.rule=Host(`${API_DOMAIN:-api.localhost}`)
+      - traefik.http.routers.api-https.entrypoints=websecure
+      - traefik.http.routers.api-https.tls.certresolver=letsencrypt
+      - traefik.http.services.api.loadbalancer.server.port=3000
+      - com.centurylinklabs.watchtower.enable=true
+    networks:
+      - public
+      - private
+
+  web:
+    image: ${WEB_IMAGE:-igorsily/acme-web:latest}
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      NEXT_PUBLIC_SERVER_URL: ${NEXT_PUBLIC_SERVER_URL:-http://api.localhost}
+      SENTRY_DSN: ${SENTRY_DSN}
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "node -e \"fetch('http://127.0.0.1:3001').then((response)=>{if(!response.ok)process.exit(1)}).catch(()=>process.exit(1))\"",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=acme-public
+      - traefik.http.routers.web-http.rule=Host(`${WEB_DOMAIN:-web.localhost}`)
+      - traefik.http.routers.web-http.entrypoints=web
+      - traefik.http.routers.web-https.rule=Host(`${WEB_DOMAIN:-web.localhost}`)
+      - traefik.http.routers.web-https.entrypoints=websecure
+      - traefik.http.routers.web-https.tls.certresolver=letsencrypt
+      - traefik.http.services.web.loadbalancer.server.port=3001
+      - com.centurylinklabs.watchtower.enable=true
+    networks:
+      - public
+      - private
+
+networks:
+  public:
+    name: acme-public
+    driver: bridge
+  private:
+    name: acme-private
+    external: true
+
+volumes:
+  traefik_letsencrypt:

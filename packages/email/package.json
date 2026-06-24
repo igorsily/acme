@@ -1,0 +1,29 @@
+{
+  "name": "@acme/email",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "default": "./src/index.ts"
+    },
+    "./*": {
+      "default": "./src/*.ts"
+    }
+  },
+  "scripts": {
+    "check-types": "tsc -b"
+  },
+  "dependencies": {
+    "@acme/env": "workspace:*",
+    "@react-email/components": "^0.0.41",
+    "@react-email/render": "^1.1.2",
+    "react": "catalog:",
+    "resend": "^4.5.1"
+  },
+  "devDependencies": {
+    "@acme/config": "workspace:*",
+    "@types/react": "catalog:",
+    "typescript": "catalog:"
+  }
+}

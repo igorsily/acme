@@ -1,0 +1,49 @@
+{
+  "name": "web",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --port 3001",
+    "build": "next build",
+    "start": "next start"
+  },
+  "dependencies": {
+    "@acme/api": "workspace:*",
+    "@acme/env": "workspace:*",
+    "@acme/types": "workspace:*",
+    "@acme/ui": "workspace:*",
+    "@sentry/nextjs": "^10",
+    "@tanstack/react-form": "^1.28.0",
+    "@tanstack/react-query": "^5.90.12",
+    "@tanstack/react-table": "^8.21.3",
+    "@trpc/client": "catalog:",
+    "@trpc/server": "catalog:",
+    "@trpc/tanstack-react-query": "^11.16.0",
+    "babel-plugin-react-compiler": "^1.0.0",
+    "better-auth": "catalog:",
+    "date-fns": "^4.4.0",
+    "dotenv": "catalog:",
+    "lucide-react": "catalog:",
+    "maplibre-gl": "^5.24.0",
+    "next": "^16.2.0",
+    "next-themes": "catalog:",
+    "nuqs": "^2.8.9",
+    "react": "catalog:",
+    "react-dom": "catalog:",
+    "sonner": "catalog:",
+    "superjson": "^2.2.6",
+    "use-mask-input": "^3.7.4",
+    "zod": "catalog:",
+    "zustand": "^5.0.14"
+  },
+  "devDependencies": {
+    "@acme/config": "workspace:*",
+    "@tailwindcss/postcss": "^4.1.18",
+    "@tanstack/react-query-devtools": "^5.91.1",
+    "@types/node": "^20",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
+    "tailwindcss": "catalog:",
+    "typescript": "catalog:"
+  }
+}

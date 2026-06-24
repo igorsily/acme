@@ -1,0 +1,11 @@
+.git
+node_modules
+.next
+dist
+.turbo
+.cache
+.env
+.env.*
+Dockerfile
+docker-compose*.yml
+README.md

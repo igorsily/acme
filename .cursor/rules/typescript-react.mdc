@@ -1,0 +1,48 @@
+---
+description: Padrões TypeScript e React do projeto
+alwaysApply: true
+---
+
+# TypeScript & React
+
+## TypeScript
+
+- Prefira `unknown` a `any`; use narrowing em vez de type assertions
+- Use `const` por padrão; `let` só quando reatribuir; nunca `var`
+- Tipos explícitos em parâmetros/retorno quando aumentam clareza
+- Use `??` e `?.`; template literals em vez de concatenação
+- Arrays imutáveis: `.toSorted()`, `.toReversed()` — nunca `.sort()` em props/state
+
+## Async
+
+- Sempre `await` promises em funções `async`
+- Prefira `async/await` a cadeias `.then()`
+- Trate erros com try/catch significativo; não capture só para relançar
+
+## React 19
+
+- Componentes funcionais; hooks no topo, nunca condicionais
+- Não defina componentes dentro de outros componentes
+- `key` com IDs únicos, não índices de array
+- `use()` para context (não `useContext`); `ref` como prop (sem `forwardRef`)
+- Derive estado durante render; evite `useEffect` para sincronizar props → state
+- Use `useState(fn)` para inicialização cara (localStorage, índices)
+
+## Next.js (apps/web)
+
+- Server Components para fetch assíncrono; `"use client"` só quando necessário
+- Componentes com `nuqs`/URL state precisam de `<Suspense>` (ver `admin/users/page.tsx`)
+- Importe UI de `@acme/ui`; ícones de `lucide-react`
+
+## Segurança & qualidade
+
+- Sem `console.log`, `debugger` ou `alert` em código de produção
+- Valide input do usuário com Zod
+- Links `target="_blank"` com `rel="noopener"`
+- Acessibilidade: labels em inputs, HTML semântico, alt em imagens
+
+## Escopo de mudanças
+
+- Diff mínimo focado na tarefa
+- Siga convenções existentes do arquivo antes de introduzir padrões novos
+- Rode `bun x ultracite fix` nos arquivos alterados

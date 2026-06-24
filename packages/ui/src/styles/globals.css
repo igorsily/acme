@@ -1,0 +1,152 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@source "../../../apps/**/*.{ts,tsx}";
+@source "../**/*.{ts,tsx}";
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+	/* Acme brand palette */
+	--brand-teal: oklch(0.456 0.061 186.1);
+	--brand-olive: oklch(0.473 0.045 109.6);
+	--brand-terracotta: oklch(0.619 0.11 48);
+	--brand-gold: oklch(0.746 0.099 87.6);
+	--brand-cream: oklch(0.903 0.029 77.5);
+
+	--background: oklch(1 0 0);
+	--foreground: var(--brand-teal);
+	--card: oklch(1 0 0);
+	--card-foreground: var(--brand-teal);
+	--popover: oklch(1 0 0);
+	--popover-foreground: var(--brand-teal);
+	--primary: var(--brand-teal);
+	--primary-foreground: var(--brand-cream);
+	--secondary: var(--brand-olive);
+	--secondary-foreground: var(--brand-cream);
+	--muted: oklch(0.965 0.006 77.5);
+	--muted-foreground: var(--brand-olive);
+	--accent: var(--brand-gold);
+	--accent-foreground: oklch(0.306 0.034 186.4);
+	--destructive: var(--brand-terracotta);
+	--success: var(--brand-olive);
+	--border: oklch(0.473 0.045 109.6 / 22%);
+	--input: oklch(0.473 0.045 109.6 / 28%);
+	--ring: var(--brand-teal);
+	--chart-1: var(--brand-teal);
+	--chart-2: var(--brand-olive);
+	--chart-3: var(--brand-gold);
+	--chart-4: var(--brand-terracotta);
+	--chart-5: var(--brand-cream);
+	--radius: 0.5rem;
+	--sidebar: var(--brand-teal);
+	--sidebar-foreground: var(--brand-cream);
+	--sidebar-primary: var(--brand-gold);
+	--sidebar-primary-foreground: oklch(0.306 0.034 186.4);
+	--sidebar-accent: oklch(0.4 0.055 186.1);
+	--sidebar-accent-foreground: var(--brand-cream);
+	--sidebar-border: oklch(0.903 0.029 77.5 / 14%);
+	--sidebar-ring: var(--brand-gold);
+}
+
+.dark {
+	--background: oklch(0.306 0.034 186.4);
+	--foreground: var(--brand-cream);
+	--card: oklch(0.357 0.033 110.3);
+	--card-foreground: var(--brand-cream);
+	--popover: oklch(0.357 0.033 110.3);
+	--popover-foreground: var(--brand-cream);
+	--primary: var(--brand-gold);
+	--primary-foreground: oklch(0.306 0.034 186.4);
+	--secondary: oklch(0.357 0.033 110.3);
+	--secondary-foreground: var(--brand-cream);
+	--muted: oklch(0.38 0.035 186.1);
+	--muted-foreground: oklch(0.746 0.099 87.6 / 85%);
+	--accent: var(--brand-olive);
+	--accent-foreground: var(--brand-cream);
+	--destructive: oklch(0.668 0.12 48);
+	--success: oklch(0.55 0.06 109.6);
+	--border: oklch(0.903 0.029 77.5 / 12%);
+	--input: oklch(0.903 0.029 77.5 / 16%);
+	--ring: var(--brand-gold);
+	--chart-1: var(--brand-gold);
+	--chart-2: var(--brand-teal);
+	--chart-3: var(--brand-olive);
+	--chart-4: var(--brand-terracotta);
+	--chart-5: var(--brand-cream);
+	--sidebar: oklch(0.28 0.032 186.4);
+	--sidebar-foreground: var(--brand-cream);
+	--sidebar-primary: var(--brand-gold);
+	--sidebar-primary-foreground: oklch(0.306 0.034 186.4);
+	--sidebar-accent: oklch(0.38 0.04 186.1);
+	--sidebar-accent-foreground: var(--brand-cream);
+	--sidebar-border: oklch(0.903 0.029 77.5 / 10%);
+	--sidebar-ring: var(--brand-gold);
+}
+
+@theme inline {
+	--font-sans: var(--font-montserrat), ui-sans-serif, system-ui, sans-serif;
+	--color-sidebar-ring: var(--sidebar-ring);
+	--color-sidebar-border: var(--sidebar-border);
+	--color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+	--color-sidebar-accent: var(--sidebar-accent);
+	--color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+	--color-sidebar-primary: var(--sidebar-primary);
+	--color-sidebar-foreground: var(--sidebar-foreground);
+	--color-sidebar: var(--sidebar);
+	--color-chart-5: var(--chart-5);
+	--color-chart-4: var(--chart-4);
+	--color-chart-3: var(--chart-3);
+	--color-chart-2: var(--chart-2);
+	--color-chart-1: var(--chart-1);
+	--color-ring: var(--ring);
+	--color-input: var(--input);
+	--color-border: var(--border);
+	--color-destructive: var(--destructive);
+	--color-success: var(--success);
+	--color-accent-foreground: var(--accent-foreground);
+	--color-accent: var(--accent);
+	--color-muted-foreground: var(--muted-foreground);
+	--color-muted: var(--muted);
+	--color-secondary-foreground: var(--secondary-foreground);
+	--color-secondary: var(--secondary);
+	--color-primary-foreground: var(--primary-foreground);
+	--color-primary: var(--primary);
+	--color-popover-foreground: var(--popover-foreground);
+	--color-popover: var(--popover);
+	--color-card-foreground: var(--card-foreground);
+	--color-card: var(--card);
+	--color-foreground: var(--foreground);
+	--color-background: var(--background);
+	--color-brand-teal: var(--brand-teal);
+	--color-brand-olive: var(--brand-olive);
+	--color-brand-terracotta: var(--brand-terracotta);
+	--color-brand-gold: var(--brand-gold);
+	--color-brand-cream: var(--brand-cream);
+	--radius-sm: calc(var(--radius) - 4px);
+	--radius-md: calc(var(--radius) - 2px);
+	--radius-lg: var(--radius);
+	--radius-xl: calc(var(--radius) + 4px);
+	--radius-2xl: calc(var(--radius) + 8px);
+	--radius-3xl: calc(var(--radius) + 12px);
+	--radius-4xl: calc(var(--radius) + 16px);
+	--font-heading: var(--font-montserrat), ui-sans-serif, system-ui, sans-serif;
+}
+
+@layer base {
+	* {
+		@apply border-border outline-ring/50;
+	}
+	body {
+		@apply font-sans bg-background text-foreground;
+	}
+	html {
+		@apply font-sans;
+	}
+	.maplibregl-popup-content {
+		@apply bg-transparent! shadow-none! p-0! rounded-none!;
+	}
+	.maplibregl-popup-tip {
+		@apply hidden!;
+	}
+}
