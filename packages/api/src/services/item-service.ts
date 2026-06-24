@@ -4,11 +4,12 @@ import type {
 	ItemCreateInput,
 	ItemDetail,
 	ItemFormValues,
+	ItemMapMarker,
 	ItemUpdateInput,
 } from "@acme/types/schemas/item.schema";
 import { slugify } from "@acme/types/utils/slugify";
 import { TRPCError } from "@trpc/server";
-import { and, eq } from "drizzle-orm";
+import { and, eq, isNotNull } from "drizzle-orm";
 
 function mapItemRow(row: typeof item.$inferSelect): ItemDetail {
 	const coordinate = row.coordinate;
@@ -119,4 +120,59 @@ export async function updateItem(
 	await db.update(item).set(values).where(eq(item.id, input.id));
 
 	return { id: input.id };
+}
+
+function isValidMapCoordinate(lat: number, lng: number): boolean {
+	if (lat === 0 && lng === 0) {
+		return false;
+	}
+
+	return lat >= -33.75 && lat <= 5.27 && lng >= -73.99 && lng <= -32.4;
+}
+
+function mapRowToMapMarker(
+	row: Pick<
+		typeof item.$inferSelect,
+		"id" | "name" | "status" | "address" | "description" | "coordinate"
+	>
+): ItemMapMarker | null {
+	if (!row.coordinate) {
+		return null;
+	}
+
+	const lat = row.coordinate.y;
+	const lng = row.coordinate.x;
+
+	if (!isValidMapCoordinate(lat, lng)) {
+		return null;
+	}
+
+	return {
+		id: row.id,
+		name: row.name,
+		status: row.status,
+		address: row.address,
+		description: row.description,
+		lat,
+		lng,
+	};
+}
+
+export async function listItemsForMap(): Promise<ItemMapMarker[]> {
+	const rows = await db
+		.select({
+			id: item.id,
+			name: item.name,
+			status: item.status,
+			address: item.address,
+			description: item.description,
+			coordinate: item.coordinate,
+		})
+		.from(item)
+		.where(and(eq(item.deleted, false), isNotNull(item.coordinate)));
+
+	return rows.flatMap((row) => {
+		const marker = mapRowToMapMarker(row);
+		return marker ? [marker] : [];
+	});
 }

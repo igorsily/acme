@@ -2,7 +2,7 @@
 
 import type { ItemDetail } from "@acme/types/schemas/item.schema";
 import { itemFormSchema } from "@acme/types/schemas/item.schema";
-import { buttonVariants } from "@acme/ui/components/button";
+import { Button, buttonVariants } from "@acme/ui/components/button";
 import {
 	Card,
 	CardContent,
@@ -11,7 +11,7 @@ import {
 	CardTitle,
 } from "@acme/ui/components/card";
 import { useMutation } from "@tanstack/react-query";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, MapPin } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -21,6 +21,7 @@ import {
 } from "@/components/features/items/item-form.utils";
 import { itemStatusOptions } from "@/components/features/items/item-form-options";
 import { createFormFactory } from "@/components/form-factory";
+import { useGoToMap } from "@/hooks/map/use-go-to-map";
 import { queryClient, trpc } from "@/lib/trpc";
 
 const itemFormFactory = createFormFactory({
@@ -35,7 +36,17 @@ type ItemFormProps = {
 
 export function ItemForm({ itemId, initialData }: ItemFormProps) {
 	const router = useRouter();
+	const goToMap = useGoToMap();
 	const isEditing = Boolean(itemId);
+
+	const mapFocusTarget =
+		isEditing && itemId && initialData?.lat != null && initialData?.lng != null
+			? {
+					itemId,
+					lat: initialData.lat,
+					lng: initialData.lng,
+				}
+			: null;
 
 	const createMutation = useMutation(
 		trpc.item.create.mutationOptions({
@@ -120,6 +131,18 @@ export function ItemForm({ itemId, initialData }: ItemFormProps) {
 								: "Preencha os dados para cadastrar um novo item."}
 						</p>
 					</div>
+				</div>
+				<div className="flex shrink-0 items-center gap-3">
+					{mapFocusTarget ? (
+						<Button
+							onClick={() => goToMap(mapFocusTarget)}
+							type="button"
+							variant="outline"
+						>
+							<MapPin aria-hidden="true" className="size-4" />
+							Ver no mapa
+						</Button>
+					) : null}
 				</div>
 			</div>
 

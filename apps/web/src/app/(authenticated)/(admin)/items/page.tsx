@@ -2,17 +2,19 @@
 
 import type { ItemList } from "@acme/types/schemas/item.schema";
 import { ContextMenuItem } from "@acme/ui/components/context-menu";
-import { Pencil, Plus, Trash2 } from "lucide-react";
+import { MapPin, Pencil, Plus, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Suspense, useMemo, useState } from "react";
 import { DataTable } from "@/components/data-table/data-table";
 import { useDataTable } from "@/components/data-table/hooks/use-data-table";
 import { createItemColumns } from "@/components/features/items/item-columns";
+import { useGoToMap } from "@/hooks/map/use-go-to-map";
 import { useListQuery } from "@/hooks/use-list-query";
 import { trpc } from "@/lib/trpc";
 
 function ItemsTableContent() {
 	const router = useRouter();
+	const goToMap = useGoToMap();
 	const [, setArchiveItem] = useState<ItemList | null>(null);
 
 	const columns = useMemo(
@@ -20,8 +22,9 @@ function ItemsTableContent() {
 			createItemColumns({
 				onArchive: setArchiveItem,
 				onEdit: (entry) => router.push(`/items/${entry.id}`),
+				onGoToMap: (entry) => goToMap({ itemId: entry.id }),
 			}),
-		[router]
+		[goToMap, router]
 	);
 
 	const query = useListQuery((input) => trpc.item.list.queryOptions(input));
@@ -58,6 +61,10 @@ function ItemsTableContent() {
 				onRowClick={(entry) => router.push(`/items/${entry.id}`)}
 				rowContextMenu={(entry) => (
 					<>
+						<ContextMenuItem onClick={() => goToMap({ itemId: entry.id })}>
+							<MapPin aria-hidden="true" className="h-4 w-4" />
+							Ver no mapa
+						</ContextMenuItem>
 						<ContextMenuItem onClick={() => router.push(`/items/${entry.id}`)}>
 							<Pencil aria-hidden="true" className="h-4 w-4" />
 							Editar

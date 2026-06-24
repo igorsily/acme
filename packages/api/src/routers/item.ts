@@ -9,13 +9,19 @@ import {
 	itemDetailSchema,
 	itemGetByIdSchema,
 	itemListSchema,
+	itemMapMarkerSchema,
 	itemUpdateSchema,
 } from "@acme/types/schemas/item.schema";
 import { desc, eq } from "drizzle-orm";
 import type { PgColumn } from "drizzle-orm/pg-core";
 import z from "zod";
 import { protectedProcedure, router } from "../index";
-import { createItem, getItemById, updateItem } from "../services/item-service";
+import {
+	createItem,
+	getItemById,
+	listItemsForMap,
+	updateItem,
+} from "../services/item-service";
 
 const filterableColumns = {
 	name: item.name,
@@ -49,6 +55,10 @@ export const itemRouter = router({
 		.input(itemGetByIdSchema)
 		.output(itemDetailSchema)
 		.query(async ({ input }) => getItemById(input.id)),
+
+	listForMap: protectedProcedure
+		.output(z.array(itemMapMarkerSchema))
+		.query(() => listItemsForMap()),
 
 	create: protectedProcedure
 		.input(itemCreateSchema)

@@ -1,6 +1,6 @@
 import type { ItemList } from "@acme/types/schemas/item.schema";
 import type { ColumnDef } from "@tanstack/react-table";
-import { Pencil, Trash2 } from "lucide-react";
+import { MapPin, Pencil, Trash2 } from "lucide-react";
 import { DataTableRowActions } from "@/components/data-table/cells/data-table-row-actions";
 import { DateCell } from "@/components/data-table/cells/date-cell";
 import {
@@ -24,11 +24,13 @@ export const itemStatusFilterOptions = [
 type CreateItemColumnsOptions = {
 	onArchive: (item: ItemList) => void;
 	onEdit: (item: ItemList) => void;
+	onGoToMap: (item: ItemList) => void;
 };
 
 export function createItemColumns({
 	onEdit,
 	onArchive,
+	onGoToMap,
 }: CreateItemColumnsOptions): ColumnDef<ItemList>[] {
 	return [
 		{
@@ -80,6 +82,11 @@ export function createItemColumns({
 			cell: ({ row }) => (
 				<DataTableRowActions
 					actions={[
+						{
+							label: "Ver no mapa",
+							icon: <MapPin aria-hidden="true" className="h-4 w-4" />,
+							onClick: () => onGoToMap(row.original),
+						},
 						{
 							label: "Editar",
 							icon: <Pencil aria-hidden="true" className="h-4 w-4" />,

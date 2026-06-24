@@ -11,7 +11,7 @@ import {
 	SidebarMenuItem,
 	SidebarRail,
 } from "@acme/ui/components/sidebar";
-import { Box, Users } from "lucide-react";
+import { Box, Map as MapIcon, Users } from "lucide-react";
 import type { Route } from "next";
 import Link from "next/link";
 import type * as React from "react";
@@ -26,6 +26,11 @@ type NavItem = {
 };
 
 const navMain: NavItem[] = [
+	{
+		title: "Mapa",
+		icon: <MapIcon />,
+		url: "/",
+	},
 	{
 		title: "Itens",
 		icon: <Box />,
