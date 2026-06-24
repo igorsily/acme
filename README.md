@@ -12,7 +12,8 @@ Monorepo TypeScript com Next.js, Fastify, tRPC, Drizzle, Better Auth e shadcn/ui
 
 ```bash
 bun install
-cp deploy/.env.example apps/server/.env
+cp apps/server/.env.example apps/server/.env
+cp apps/web/.env.example apps/web/.env
 # Ajuste DATABASE_URL, BETTER_AUTH_SECRET, etc.
 bun run db:push
 bun run dev
